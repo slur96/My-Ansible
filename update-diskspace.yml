@@ -1,0 +1,29 @@
+---
+hosts: all
+become: yes
+gather_facts: yes
+
+tasks: 
+   #Get Disk Usage
+   - name: Get disk usage
+     command: df -h
+     register: disk_usage
+
+    # Check disk soace available
+   - name: Check disk soace available
+     shell: df -h / | awk 'NR==2 {print $5}'
+     register: disk_usage
+
+    # Send Discord message when reboot is required
+   - name: Send Discord message
+     url:
+       url: "https://discord.com/api/webhooks/1160366710998696026/CdcDQYe78mRxAx9SYIIwAkuneSeaIeSS01S7NFWEKCm5IGo2lODxOhGmeF41rHO1q-Cf"
+       method: POST
+       body_format: json
+       body: '{"content": "Disk space on {{ inventory_hostname}} is above 80%!"}'
+       headers: 
+          Content-Type: application/json
+       status_code: 204
+     when: disk_usage.stdout[:-1]|int > 80
+
+  
